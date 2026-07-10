@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "258109605054",
+    "project_id": "e-card-54c23",
+    "storage_bucket": "e-card-54c23.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:258109605054:android:234554fcab0573b1dbcaef",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPU1bhYnE908hGYYxgJ62QoTB-MbAT2Dk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
