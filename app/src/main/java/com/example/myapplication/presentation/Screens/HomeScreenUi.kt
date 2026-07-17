@@ -6,7 +6,7 @@ import androidx.navigation.NavController
 import com.example.myapplication.presentation.ViewModel.ShoppingAppViewModel
 
 @Composable
-fun HomeScreenUi(viewModel: ShoppingAppViewModel = hiltViewModel(),navController : NavController){
+fun HomeScreenUi(navController : NavController){
 
 
 

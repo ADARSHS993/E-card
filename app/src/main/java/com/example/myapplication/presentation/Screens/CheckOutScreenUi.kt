@@ -6,7 +6,7 @@ import androidx.navigation.NavController
 import com.example.myapplication.presentation.ViewModel.ShoppingAppViewModel
 
 @Composable
-fun CheckOutScreen(viewModel: ShoppingAppViewModel = hiltViewModel(),navController : NavController, productId : String){
+fun CheckOutScreen(navController : NavController, productId : String){
 
 
 

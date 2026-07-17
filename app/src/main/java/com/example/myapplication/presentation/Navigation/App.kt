@@ -62,13 +62,13 @@ data class BottomNavigationItem(
 fun App(
     firebasAuth : FirebaseAuth
 ) {
-    val navController = rememberNavController()
+    val navController = rememberNavController()// The NavController is the "GPS" that moves you between rooms.
 
     var selectedItem by remember {
         mutableStateOf(0)
     }
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()// Tracks where you are right now
+    val currentDestination = navBackStackEntry?.destination?.route // The name of the current screen
 
     val shouldShowBottomBar = remember { mutableStateOf(false) }
 

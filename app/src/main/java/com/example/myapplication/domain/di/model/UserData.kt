@@ -7,9 +7,10 @@ data class UserData(
     val lastName: String = "",
     val email: String = "",
     val password: String = "",
-    val phoneNumber : String = "",
-    val address : String = "",
-    val profileImage : String = "",
+    val phoneNumber: String = "",
+    val address: String = "",
+    val profileImage: String = "",
+    val confirmPassword: String,
 ){
     fun toMap() : Map<String, Any>{
         val map = mutableStateMapOf<String,Any>()
@@ -25,4 +26,14 @@ data class UserData(
 }
 
 data class USerDataParent(val nodeID : String = "",
-                          val userData : UserData = UserData())
+                          val userData : UserData = UserData(
+                              firstName = "",
+                              lastName = "",
+                              email = "",
+                              password = "",
+                              phoneNumber = "",
+                              address = "",
+                              profileImage = "",
+                              confirmPassword = ""
+                          )
+)

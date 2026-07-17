@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 
 class RepoImpl @Inject constructor(
-    var firebaseAuth : FirebaseAuth
-    ,var firebaseFirestore: FirebaseFirestore
+    private var firebaseAuth : FirebaseAuth
+    , private var firebaseFirestore: FirebaseFirestore
 ): Repo {
 
     override fun registerUserwithEmailAndPassword(userData: UserData): Flow<ResultState<String>> =
@@ -348,14 +348,12 @@ class RepoImpl @Inject constructor(
         firebaseFirestore.collection("products").whereEqualTo("category", categoryName).get()
             .addOnSuccessListener {
 
-                val products = it.documents.mapNotNull { document ->
+                val category = it.documents.mapNotNull {
+                    document ->
 
-                    document.toObject(ProductDataModel::class.java)?.apply {
-
-                        productId = document.id
-                    }
+                    document.toObject(CategoryDataModel::class.java)
                 }
-                trySend(ResultState.Success(products))
+                trySend(ResultState.Success(category))
             }.addOnFailureListener {
                 trySend(ResultState.Error(it.toString()))
             }
