@@ -57,7 +57,6 @@ fun EachProductDetailScreens(navController : NavController, productId : String, 
     val getProductById = viewModel.getProductByIdState.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    val context = LocalContext.current
     var selectedSize by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(1) }
     val isFavorite by remember { mutableStateOf(false) }
