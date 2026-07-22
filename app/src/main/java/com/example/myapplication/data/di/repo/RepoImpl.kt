@@ -31,7 +31,9 @@ class RepoImpl @Inject constructor(
 
             trySend(ResultState.Loading)
 
-            firebaseAuth.createUserWithEmailAndPassword(userData.email, userData.password)
+            firebaseAuth.createUserWithEmailAndPassword(userData.email,
+                userData.password.toString()
+            )
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
                         firebaseFirestore.collection(USER_COLLECTION)
@@ -63,7 +65,7 @@ class RepoImpl @Inject constructor(
 
         trySend(ResultState.Loading)
 
-        firebaseAuth.signInWithEmailAndPassword(userData.email, userData.password)
+        firebaseAuth.signInWithEmailAndPassword(userData.email, userData.password.toString())
             .addOnCompleteListener {
                 if(it.isSuccessful){
                     trySend(ResultState.Success("User Login Successfully"))
@@ -79,17 +81,26 @@ class RepoImpl @Inject constructor(
             }
 
 
-    override fun getUserById(uid: String): Flow<ResultState<USerDataParent>> = callbackFlow{
+    override fun getUserById(uid: String): Flow<ResultState<USerDataParent>> = callbackFlow {
 
         trySend(ResultState.Loading)
 
         firebaseFirestore.collection(USER_COLLECTION).document(uid).get().addOnCompleteListener {
-            if (it.isSuccessful){
-                val data = it.result.toObject(UserData::class.java)!!
-                val userDataParent = USerDataParent(it.result.id,data)
-                trySend(ResultState.Success(userDataParent))
-            }else{
-                if(it.exception != null){
+            if (it.isSuccessful) {
+                val document = it.result
+                // 1. Convert the document to the UserData object
+                val data = document.toObject(UserData::class.java)
+
+                // 2. ONLY proceed if data is NOT null
+                if (data != null) {
+                    val userDataParent = USerDataParent(document.id, data)
+                    trySend(ResultState.Success(userDataParent))
+                } else {
+                    // If data is null (document doesn't exist), send an error
+                    trySend(ResultState.Error("User document is empty or does not exist"))
+                }
+            } else {
+                if (it.exception != null) {
                     trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
                 }
             }

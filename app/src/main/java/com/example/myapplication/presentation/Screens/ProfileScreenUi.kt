@@ -21,9 +21,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
@@ -326,9 +324,7 @@ fun ProfileScreen(
                                 email = email.value,
                                 phoneNumber = phoneno.value,
                                 address = address.value,
-                                password = TODO(),
                                 profileImage = imageUri.value,
-                                confirmPassword = TODO(),
                             )
 
                             val userDATApARENT = USerDataParent(

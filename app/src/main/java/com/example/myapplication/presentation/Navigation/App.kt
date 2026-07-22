@@ -1,5 +1,6 @@
 package com.example.myapplication.presentation.Navigation
 
+import ProfileScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -49,7 +50,6 @@ import com.example.myapplication.presentation.Screens.EachCategorieProduct
 import com.example.myapplication.presentation.Screens.EachProductDetailScreens
 import com.example.myapplication.presentation.Screens.GetAllFav
 import com.example.myapplication.presentation.Screens.HomeScreenUi
-import com.example.myapplication.presentation.Screens.ProfileScreen
 
 
 data class BottomNavigationItem(

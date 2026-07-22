@@ -6,18 +6,18 @@ data class UserData(
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
-    val password: String = "",
+    val password: String? = null,
     val phoneNumber: String = "",
     val address: String = "",
     val profileImage: String = "",
-    val confirmPassword: String,
+    val confirmPassword: String? = null,
 ){
     fun toMap() : Map<String, Any>{
         val map = mutableStateMapOf<String,Any>()
         map["firstName"] = firstName
         map["lastName"] = lastName
         map["email"] = email
-        map["password"] = password
+        map["password"] = password as Any
         map["phoneNumber"] = phoneNumber
         map["address"] = address
         map["profileImage"] = profileImage
