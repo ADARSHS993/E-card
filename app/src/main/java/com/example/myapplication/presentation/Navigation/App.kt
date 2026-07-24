@@ -46,7 +46,7 @@ import com.example.myapplication.presentation.SignUpScreen
 import com.example.myapplication.presentation.Screens.AllCategoriesScreen
 import com.example.myapplication.presentation.Screens.CartScreen
 import com.example.myapplication.presentation.Screens.CheckOutScreen
-import com.example.myapplication.presentation.Screens.EachCategorieProduct
+import com.example.myapplication.presentation.Screens.EachCategorieProductScreenUi
 import com.example.myapplication.presentation.Screens.EachProductDetailScreens
 import com.example.myapplication.presentation.Screens.GetAllFav
 import com.example.myapplication.presentation.Screens.HomeScreenUi
@@ -219,9 +219,9 @@ fun App(
                     composable<Routes.EachCategoryItemsScreen> {
 
                         val category: Routes.EachCategoryItemsScreen = it.toRoute()
-                        EachCategorieProduct(
+                        EachCategorieProductScreenUi(
                             navController = navController,
-                            CategoryName = category.categoryname
+                            categoryName = category.categoryname
                         )
                     }
                 }
