@@ -103,4 +103,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
 
+    //razorpay integration
+    implementation("com.razorpay:checkout:1.6.40")
+
 }

@@ -130,7 +130,7 @@ class ShoppingAppViewModel @Inject constructor(
                     is ResultState.Success -> {
                         _getSpecificCategoryItemsState.value = _getSpecificCategoryItemsState.value.copy(
                             isLoading = false,
-                            UserData = it.data as List<ProductDataModel>
+                            UserData = it.data
                         )
                     }
 

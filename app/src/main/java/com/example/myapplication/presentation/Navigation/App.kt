@@ -60,7 +60,8 @@ data class BottomNavigationItem(
 
 @Composable
 fun App(
-    firebasAuth : FirebaseAuth
+    firebasAuth: FirebaseAuth,
+    payTest:()-> Unit
 ) {
     val navController = rememberNavController()// The NavController is the "GPS" that moves you between rooms.
 
@@ -242,7 +243,8 @@ fun App(
 
                     CheckOutScreen(
                         navController = navController,
-                        productId = product.ProductId
+                        productId = product.ProductId,
+                        pay = payTest
                     )
                 }
             }

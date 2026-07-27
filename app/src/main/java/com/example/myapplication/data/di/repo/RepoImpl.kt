@@ -352,7 +352,7 @@ class RepoImpl @Inject constructor(
     }
 
 
-    override fun getSpecificCategories(categoryName: String): Flow<ResultState<List<CategoryDataModel>>> = callbackFlow {
+    override fun getSpecificCategories(categoryName: String): Flow<ResultState<List<ProductDataModel>>> = callbackFlow {
 
         trySend(ResultState.Loading)
 
@@ -362,7 +362,7 @@ class RepoImpl @Inject constructor(
                 val category = it.documents.mapNotNull {
                     document ->
 
-                    document.toObject(CategoryDataModel::class.java)
+                    document.toObject(ProductDataModel::class.java)
                 }
                 trySend(ResultState.Success(category))
             }.addOnFailureListener {

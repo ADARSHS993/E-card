@@ -47,7 +47,12 @@ import com.example.myapplication.presentation.ViewModel.ShoppingAppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckOutScreen(navController : NavController, productId : String, viewModel: ShoppingAppViewModel = hiltViewModel()){
+fun CheckOutScreen(
+    navController: NavController,
+    productId: String,
+    viewModel: ShoppingAppViewModel = hiltViewModel(),
+    pay: () -> Unit
+){
 
     val state = viewModel.getProductByIdState.collectAsStateWithLifecycle()
 
@@ -247,7 +252,7 @@ fun CheckOutScreen(navController : NavController, productId : String, viewModel:
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(onClick = {
-                        //pay.invoke()
+                        pay.invoke()
                     },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
