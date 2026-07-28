@@ -211,19 +211,32 @@ class RepoImpl @Inject constructor(
     }
 
     override fun getProductById(productId: String): Flow<ResultState<ProductDataModel>> = callbackFlow {
-       trySend(ResultState.Loading)
+        if (productId.isBlank()) {
+            trySend(ResultState.Error("Invalid Product ID"))
+            close()
+            return@callbackFlow
+        }
 
-       firebaseFirestore.collection(PRODUCT_COLLECTION).document(productId).get().addOnSuccessListener {
+        trySend(ResultState.Loading)
 
-           val product = it.toObject(ProductDataModel::class.java)
+        firebaseFirestore.collection("products").document(productId).get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val document = task.result
+                    val product = document.toObject(ProductDataModel::class.java)?.apply {
+                        this.productId = document.id // Ensure ID is attached
+                    }
 
-           trySend(ResultState.Success(product!!))
-       }.addOnFailureListener {
-           trySend(ResultState.Error(it.toString()))
-       }
-       awaitClose {
-           close()
-       }
+                    if (product != null) {
+                        trySend(ResultState.Success(product))
+                    } else {
+                        trySend(ResultState.Error("Product not found"))
+                    }
+                } else {
+                    trySend(ResultState.Error(task.exception?.message ?: "Error"))
+                }
+            }
+        awaitClose { close() }
     }
 
     override fun addToCart(cartDataModels: CartDataModel): Flow<ResultState<String>> = callbackFlow {
@@ -322,8 +335,15 @@ class RepoImpl @Inject constructor(
         firebaseFirestore.collection("products").document(productId).get()
             .addOnSuccessListener {
 
-                val product = it.toObject(ProductDataModel::class.java)
-                trySend(ResultState.Success(product!!))
+                val product = it.toObject(ProductDataModel::class.java)?.apply {
+                    this.productId = it.id
+                }
+                if(product != null){
+                    trySend(ResultState.Success(product))
+                }else{
+                    trySend(ResultState.Error("Product not found"))
+                }
+
             }.addOnFailureListener {
                 trySend(ResultState.Error(it.toString()))
             }
@@ -362,7 +382,9 @@ class RepoImpl @Inject constructor(
                 val category = it.documents.mapNotNull {
                     document ->
 
-                    document.toObject(ProductDataModel::class.java)
+                    document.toObject(ProductDataModel::class.java)?.apply {
+                        this.productId = document.id
+                    }
                 }
                 trySend(ResultState.Success(category))
             }.addOnFailureListener {

@@ -48,7 +48,7 @@ fun ProductItems(
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.body1)
 
-                Text(text = "$${product.finalPrice}"
+                Text(text = "Rs ${product.finalPrice}"
                 , style = MaterialTheme.typography.body2
                 , color = MaterialTheme.colors.primary)
             }

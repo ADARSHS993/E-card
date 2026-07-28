@@ -119,7 +119,7 @@ fun EachCategorieProductScreenUi(
                     ) {
 
                         items(products){product->
-                            ProductItems(product = product!!, onProductClick = {
+                            ProductItems(product = product, onProductClick = {
                                 navController.navigate(Routes.EachProductDetailsScreen(product.productId))
                             })
                         }

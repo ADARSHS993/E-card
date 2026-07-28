@@ -1,5 +1,6 @@
 package com.example.myapplication.presentation.Screens
 
+import android.util.Log
 import com.example.myapplication.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -138,136 +139,172 @@ fun HomeScreenUi(navController: NavController, viewModel: ShoppingAppViewModel =
 
                     //Category Section
 
-                    Column {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+
+                        // 2. The Header Row (Title and See More button)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically // Keeps text aligned
                         ) {
-                            Text("Categories", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "See More", color = colorResource(id = R.color.orange),
+                                text = "Categories",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "See More",
+                                color = colorResource(id = R.color.orange),
                                 modifier = Modifier.clickable {
                                     navController.navigate(Routes.AllCategoryScreen)
                                 },
                                 style = MaterialTheme.typography.bodyMedium
                             )
-
-                            LazyRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentPadding = PaddingValues(16.dp)
-                            ) {
-                                items(homeState.value.categories ?: emptyList()) { category ->
-
-                                    CategoryItem(
-                                        ImageUri = category.categoryImage,
-                                        Category = category.name,
-                                        onClick = {
-                                            navController.navigate(Routes.EachCategoryItemsScreen(category.name))
-                                        }
-                                    )
-                                }
-                            }
                         }
 
-                       homeState.value.banner?.let { banner->
-                           Banner(banner)
-                       }
-                           //flash Sale Section
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween)
-                            {
-                                Text("Flash Sale", style = MaterialTheme.typography.titleMedium)
-                                Text("See More",
-                                    color = colorResource(id = R.color.orange),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.clickable{
-                                        navController.navigate(Routes.SeeAllProductScreen)
+                        // 3. The LazyRow is now OUTSIDE the header Row, so it appears underneath
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp) // Adds consistent spacing between items
+                        ) {
+                            items(homeState.value.categories ?: emptyList()) { category ->
+                                CategoryItem(
+                                    ImageUri = category.categoryImage,
+                                    Category = category.name,
+                                    onClick = {
+                                        navController.navigate(
+                                            Routes.EachCategoryItemsScreen(
+                                                category.name
+                                            )
+                                        )
                                     }
                                 )
                             }
-
-                            LazyRow(modifier = Modifier.fillMaxWidth(),
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp))
-                            {
-                                items(homeState.value.products?: emptyList()){product->
-                                    ProductCard(product = product,
-                                        navController = navController)
-                                }
-                            }
                         }
-
-                        //build the suggested for you
-
-                        Column(
-                            modifier = Modifier.padding(top = 16.dp, bottom = 5.dp)
+                    }
+                    homeState.value.banner?.let { banner ->
+                        Banner(banner)
+                    }
+                    //flash Sale Section
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         )
                         {
-                            when{
-                                getAllSuggestedProduct.value.isLoading ->{
-                                    Box(modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center){
-                                        CircularProgressIndicator()
-                                    }
+                            Text("Flash Sale", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "See More",
+                                color = colorResource(id = R.color.orange),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.clickable {
+                                    navController.navigate(Routes.SeeAllProductScreen)
+                                }
+                            )
+                        }
+
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        )
+                        {
+                            items(homeState.value.products ?: emptyList()) { product ->
+                                ProductCard(
+                                    product = product,
+                                    navController = navController
+                                )
+                            }
+                        }
+                    }
+
+                    //build the suggested for you
+
+                    Column(
+                        modifier = Modifier.padding(top = 16.dp, bottom = 5.dp)
+                    )
+                    {
+                        when {
+                            getAllSuggestedProduct.value.isLoading -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+
+                            getAllSuggestedProduct.value.errorMessage != null -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("Error : ${getAllSuggestedProduct.value.errorMessage}")
+                                }
+                            }
+
+                            getSuggestedProductData.isEmpty() -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("No Products to Suggest Like One")
+                                }
+                            }
+
+                            else -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                )
+                                {
+                                    Text(
+                                        "Suggested For You",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        "See More",
+                                        color = colorResource(id = R.color.orange),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.clickable {
+                                            navController.navigate(Routes.SeeAllProductScreen)
+                                        }
+                                    )
                                 }
 
-                                getAllSuggestedProduct.value.errorMessage != null ->{
-                                    Box(modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center){
-                                        Text("Error : ${getAllSuggestedProduct.value.errorMessage}")
+                                LazyRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                )
+                                {
+                                    items(
+                                        homeState.value.products ?: emptyList()
+                                    ) { product ->
+                                        ProductCard(
+                                            product = product,
+                                            navController = navController
+                                        )
                                     }
-                                }
-
-                                getSuggestedProductData.isEmpty() ->{
-                                    Box(modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center){
-                                        Text("No Products to Suggest Like One")
-                                    }
-                                }
-
-                                  else ->{
-                                          Row(modifier = Modifier.fillMaxWidth()
-                                              .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                                              horizontalArrangement = Arrangement.SpaceBetween)
-                                          {
-                                              Text("Suggested For You", style = MaterialTheme.typography.titleMedium)
-                                              Text("See More",
-                                                  color = colorResource(id = R.color.orange),
-                                                  style = MaterialTheme.typography.bodyMedium,
-                                                  modifier = Modifier.clickable{
-                                                      navController.navigate(Routes.SeeAllProductScreen)
-                                                  }
-                                              )
-                                          }
-
-                                          LazyRow(modifier = Modifier.fillMaxWidth(),
-                                              contentPadding = PaddingValues(horizontal = 16.dp),
-                                              horizontalArrangement = Arrangement.spacedBy(12.dp))
-                                          {
-                                              items(
-                                                  homeState.value.products ?: emptyList()
-                                              ) { product ->
-                                                  ProductCard(
-                                                      product = product,
-                                                      navController = navController
-                                                  )
-                                              }
-                                          }
                                 }
                             }
                         }
                     }
                 }
-
             }
-        }
 
+        }
     }
+
 }
+
 
 @Composable
 fun CategoryItem(
@@ -312,7 +349,12 @@ fun ProductCard(product: ProductDataModel, navController: NavController) {
         modifier = Modifier
             .width(150.dp)
             .clickable {
-                navController.navigate(Routes.EachProductDetailsScreen(product.productId))
+                // Ensure product.productId is not empty!
+                if (product.productId.isNotEmpty()) {
+                    navController.navigate(Routes.EachProductDetailsScreen(product.productId))
+                } else {
+                    Log.e("Navigation", "Product ID is missing for ${product.name}")
+                }
             }
             .aspectRatio(0.7f),
         elevation = CardDefaults.cardElevation(
@@ -342,7 +384,7 @@ fun ProductCard(product: ProductDataModel, navController: NavController) {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "$${product.finalPrice}",
+                    "Rs ${product.finalPrice}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -350,7 +392,7 @@ fun ProductCard(product: ProductDataModel, navController: NavController) {
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
-                    "$${product.finalPrice}",
+                    "Rs ${product.finalPrice}",
                     style = MaterialTheme.typography.bodySmall,
                     textDecoration = TextDecoration.LineThrough,
                     color = Color.Gray

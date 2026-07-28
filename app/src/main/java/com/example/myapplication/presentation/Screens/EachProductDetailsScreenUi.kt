@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -52,169 +54,208 @@ import com.example.myapplication.presentation.ViewModel.ShoppingAppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EachProductDetailScreens(navController : NavController, productId : String, viewModel: ShoppingAppViewModel = hiltViewModel()){
-
+fun EachProductDetailScreens(
+    navController: NavController,
+    productId: String,
+    viewModel: ShoppingAppViewModel = hiltViewModel()
+) {
     val getProductById = viewModel.getProductByIdState.collectAsStateWithLifecycle()
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
     var selectedSize by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(1) }
-    val isFavorite by remember { mutableStateOf(false) }
+    var isFavorite by remember { mutableStateOf(false) } // Changed to var so it can be toggled
 
-    LaunchedEffect(key1 = Unit) {
-
-        viewModel.getProductByID(productId)
+    LaunchedEffect(key1 = productId) {
+        if (!productId.isNullOrBlank()) {
+            viewModel.getProductByID(productId)
+        }
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
-
         topBar = {
-
             TopAppBar(
                 title = { Text("Product Details") },
                 navigationIcon = {
-                    IconButton(onClick = {navController.popBackStack() }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 scrollBehavior = scrollBehavior
             )
-
         }
-    ){innerpadding ->
-
-
-        when{
+    ) { innerpadding ->
+        when {
             getProductById.value.isLoading -> {
-
-                Box(Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center){
-                    CircularProgressIndicator()
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = colorResource(id = R.color.orange))
                 }
             }
 
-            getProductById.value.errorMessage != null ->{
-                Text(text = getProductById.value.errorMessage!!)
+            getProductById.value.errorMessage != null -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = getProductById.value.errorMessage!!, color = Color.Red)
+                }
             }
 
-            getProductById.value.UserData != null ->{
-                val product = getProductById.value.UserData!!.copy(productId  = productId)
+            getProductById.value.UserData != null -> {
+                val product = getProductById.value.UserData!!
 
-                Column( modifier = Modifier.fillMaxSize()
-                    .padding(innerpadding)
-                    .verticalScroll(rememberScrollState())){
-
-                  Box(modifier = Modifier.height(300.dp)){
-
-                      AsyncImage(
-                          model = product.image,
-                          contentDescription = null,
-                          modifier = Modifier.fillMaxSize(),
-                          contentScale = ContentScale.Crop
-                      )
-                  }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerpadding)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // 1. Image Header
+                    AsyncImage(
+                        model = product.image,
+                        contentDescription = product.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(350.dp),
+                        contentScale = ContentScale.Crop
+                    )
 
                     Column(modifier = Modifier.padding(16.dp)) {
-
-                        Text(text = "Rs ${product.price}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 8.dp)) }
-
-                    Text(text = "Size",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-
-                    Row (horizontalArrangement = Arrangement.spacedBy(8.dp)){
-
-
-                        listOf("S","M","L","XL").forEach {size->
-
-                            OutlinedButton(
-                                onClick = {selectedSize = size},
-                                colors = ButtonDefaults.outlinedButtonColors(
-
-                                    containerColor = if(selectedSize == size) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                    contentColor = if(selectedSize == size) Color.White else MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-
-                                Text(text = "Size")
-                            }
-
-                        }
-                    }
-
-                    Text("Quantity", style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ){
-
-                        IconButton(onClick = { if(quantity > 1) quantity--}) {
-                            Text("-", style = MaterialTheme.typography.headlineSmall)
-                        }
-
-                        Text(quantity.toString(), style = MaterialTheme.typography.bodyLarge)
-
-                        IconButton(onClick = { quantity++ }) {
-
-                            Text("+", style = MaterialTheme.typography.headlineSmall)
-                        }
-                    }
-
-                    Text("Description", style = MaterialTheme.typography.labelLarge,
-                         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-
-                    Text(text = product.description)
-
-                    Button(onClick = {
-                        val cartDataModels = CartDataModel(
-                            productId = product.productId,
-                            name = product.name,
-                            image = product.image,
-                            price = product.price,
-                            quantity = quantity,
-                            size = selectedSize,
-                            description = product.description,
-                            category = product.category
+                        // 2. Name & Price
+                        Text(
+                            text = product.name,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
-                        viewModel.addToCart(cartDataModels = cartDataModels)
-                    },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange)))
-                    {
-                        Text("Add to Cart")
-                    }
 
-                    Button(
-                        onClick = { navController.navigate(Routes.CheckoutScreen(productId))},
-                        colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange))
-                    ) {
-                        Text("Buy Now")
-                    }
+                        Text(
+                            text = "Rs ${product.price}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = colorResource(id = R.color.orange),
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
 
-                    OutlinedButton(
-                        onClick = {isFavorite != isFavorite
-                                  viewModel.addToFav(product)},
-                        modifier = Modifier.fillMaxWidth().padding()
-                    ) {
-
-                        Row {
-                            Icon(
-                                if(isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite"
-                            )
-
-                            Text("Add to WishList")
+                        // 3. Size Selection
+                        Text(
+                            text = "Select Size",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("S", "M", "L", "XL").forEach { size ->
+                                OutlinedButton(
+                                    onClick = { selectedSize = size },
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = if (selectedSize == size) colorResource(id = R.color.orange) else Color.Transparent,
+                                        contentColor = if (selectedSize == size) Color.White else colorResource(
+                                            id = R.color.orange
+                                        )
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp,
+                                        colorResource(id = R.color.orange)
+                                    )
+                                ) {
+                                    Text(text = size) // Fixed: Now shows S, M, L, XL
+                                }
+                            }
                         }
+
+                        // 4. Quantity Selection
+                        Text(
+                            text = "Quantity",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            IconButton(onClick = { if (quantity > 1) quantity-- }) {
+                                Text("-", style = MaterialTheme.typography.headlineMedium)
+                            }
+                            Text(
+                                text = quantity.toString(),
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            IconButton(onClick = { quantity++ }) {
+                                Text("+", style = MaterialTheme.typography.headlineMedium)
+                            }
+                        }
+
+                        // 5. Description
+                        Text(
+                            text = "Description",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        )
+                        Text(
+                            text = product.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+
+                       Spacer(modifier = Modifier.height(32.dp))
+
+                        // 6. Action Buttons
+                        Button(
+                            onClick = {
+                                val cartDataModels = CartDataModel(
+                                    productId = productId,
+                                    name = product.name,
+                                    image = product.image,
+                                    price = product.price,
+                                    quantity = quantity,
+                                    size = selectedSize
+                                )
+                                viewModel.addToCart(cartDataModels = cartDataModels)
+                            },
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange)),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Add to Cart", color = Color.White)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = { navController.navigate(Routes.CheckoutScreen(productId)) },
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            colors = ButtonDefaults.buttonColors(Color.Black),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Buy Now", color = Color.White)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                isFavorite = !isFavorite
+                                viewModel.addToFav(product)
+                            },
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                colorResource(id = R.color.orange)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                tint = colorResource(id = R.color.orange)
+                            )
+                          Spacer(modifier = Modifier.width(8.dp))
+                            Text("Add to Wishlist", color = colorResource(id = R.color.orange))
+                        }
+
+                       Spacer(modifier = Modifier.height(24.dp))
                     }
-                }
                 }
             }
         }
     }
-
+}

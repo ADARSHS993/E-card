@@ -13,6 +13,6 @@ data class ProductDataModel(
     var createBy : String = "",
     var category : String = "",
     var availableUnits : Int = 0,
-    var productId : String = ""
+    var productId : String = "",
 
 )

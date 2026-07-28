@@ -38,6 +38,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import com.example.myapplication.domain.di.model.ProductDataModel
 
 import com.google.firebase.auth.FirebaseAuth
 
@@ -199,7 +200,7 @@ fun App(
                     }
 
                     composable<Routes.CartScreen> {
-                        CartScreen(navController = navController)
+                        CartScreen(navController = navController, product = ProductDataModel())
                     }
 
                     composable<Routes.ProfileScreen> {
