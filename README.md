@@ -12,8 +12,6 @@ This project is under development.
 - Navigation between Login and Sign Up screens
 - Material 3 UI Design
 - Jetpack Compose UI
-
-### 🚀 Coming Soon
 - Firebase Authentication
 - Home Screen
 - Product Listing
@@ -23,7 +21,6 @@ This project is under development.
 - Checkout
 - Payment Integration
 - User Profile
-- Order Management
 
 ## 🛠 Tech Stack
 
