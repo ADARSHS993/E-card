@@ -121,7 +121,7 @@ fun GetAllFav(navController : NavController, viewModel: ShoppingAppViewModel = h
 fun ProductCard(product : ProductDataModel, onProductClick :() -> Unit){
 
     Card(
-        onClick = {onProductClick},
+        onClick = onProductClick,
         modifier = Modifier.fillMaxWidth()
     ){
         Column{
@@ -138,7 +138,7 @@ fun ProductCard(product : ProductDataModel, onProductClick :() -> Unit){
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold)
 
-                Text(text = product.price,
+                Text(text = "Rs ${product.price}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary)
             }

@@ -200,7 +200,7 @@ fun App(
                     }
 
                     composable<Routes.CartScreen> {
-                        CartScreen(navController = navController, product = ProductDataModel())
+                        CartScreen(navController = navController)
                     }
 
                     composable<Routes.ProfileScreen> {

@@ -1,6 +1,7 @@
 package com.example.myapplication.presentation.Screens
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,10 +55,14 @@ fun CheckOutScreen(
     navController: NavController,
     productId: String,
     viewModel: ShoppingAppViewModel = hiltViewModel(),
-    pay: () -> Unit
-){
+    pay: () -> Unit,
+) {
 
-    val state = viewModel.getProductByIdState.collectAsStateWithLifecycle()
+    val cartState =
+        viewModel.getCartState.collectAsStateWithLifecycle()
+
+    val cartItems =
+        cartState.value.UserData ?: emptyList()
 
     val email = remember { mutableStateOf("") }
     val country = remember { mutableStateOf("") }
@@ -63,206 +71,546 @@ fun CheckOutScreen(
     val address = remember { mutableStateOf("") }
     val postalCode = remember { mutableStateOf("") }
     val city = remember { mutableStateOf("") }
-    val selectedMethod = remember { mutableStateOf("Standard FREE Delivery over Rs. 4500") }
 
-    LaunchedEffect( key1 = Unit) {
-        viewModel.getProductByID(productId)
+    val selectedMethod =
+        remember {
+            mutableStateOf("Standard FREE delivery over Rs. 4500")
+        }
+
+    LaunchedEffect(Unit) {
+        viewModel.getCart()
+    }
+
+    val totalPrice = remember(cartItems) {
+
+        cartItems.sumOf { item ->
+
+            val price = item.price
+                .replace(Regex("[^0-9.]"), "")
+                .toDoubleOrNull()
+                ?: 0.0
+
+            price * item.quantity
+        }
     }
 
     Scaffold(
+
         topBar = {
 
             TopAppBar(
-                title = { Text(text = "Shipping") },
-                navigationIcon = {
-                    IconButton(onClick = {navController.popBackStack() }) {
 
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                title = {
+                    Text("Shipping")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ) {
+
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
         }
-    ) {innerPadding->
 
-        when{
+    ) { innerPadding ->
 
-            state.value.isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center){
-                    CircularProgressIndicator()
+        when {
+
+            cartState.value.isLoading &&
+                    cartItems.isEmpty() -> {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    CircularProgressIndicator(
+                        color =
+                            colorResource(id = R.color.orange)
+                    )
                 }
-
             }
 
-            state.value.errorMessage != null -> {
-                Box(modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center){
+            cartState.value.errorMessage != null -> {
 
-                    Spacer(modifier = Modifier.padding(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
 
-                    Text(text = "Sorry, Unable to Get Information")
+                    Text(
+                        text =
+                            "Error: ${cartState.value.errorMessage}",
+                        color = Color.Red
+                    )
                 }
             }
 
-            state.value.UserData == null -> {
+            cartItems.isEmpty() -> {
 
-                Box(modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center){
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
 
-                    Text(text = "No Products Available")
+                    Text("Your cart is empty")
                 }
             }
 
             else -> {
 
-                Column(modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-                ){
-                    Row (verticalAlignment = Alignment.CenterVertically){
-
-                        AsyncImage(
-                            model = state.value.UserData!!.image,
-                            contentDescription = null,
-                            modifier = Modifier.padding(18.dp)
-                                .border(1.dp, Color.Gray)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(
+                            rememberScrollState()
                         )
+                        .padding(16.dp)
+                ) {
 
-                        Spacer(modifier = Modifier.padding(8.dp))
+                    Text(
+                        text = "Order Summary",
+                        style =
+                            MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                        Column {
-                            Text(text = state.value.UserData!!.name,
-                                style = MaterialTheme.typography.bodyLarge)
+                    Spacer(
+                        modifier = Modifier.height(16.dp)
+                    )
 
-                            Text(text = "$${state.value.UserData!!.finalPrice}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold)
+                    // DISPLAY ALL CART PRODUCTS
+
+                    cartItems.forEach { item ->
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            AsyncImage(
+                                model = item.image,
+                                contentDescription = item.name,
+
+                                modifier = Modifier
+                                    .size(90.dp)
+                                    .border(
+                                        1.dp,
+                                        Color.LightGray
+                                    )
+                            )
+
+                            Spacer(
+                                modifier = Modifier.width(16.dp)
+                            )
+
+                            Column(
+                                modifier =
+                                    Modifier.weight(1f)
+                            ) {
+
+                                Text(
+                                    text = item.name,
+                                    style =
+                                        MaterialTheme
+                                            .typography
+                                            .titleMedium,
+                                    fontWeight =
+                                        FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = "Size: ${item.size}"
+                                )
+
+                                Text(
+                                    text =
+                                        "Quantity: ${item.quantity}"
+                                )
+
+                                Text(
+                                    text = "Rs ${item.price}",
+                                    color =
+                                        colorResource(
+                                            id = R.color.orange
+                                        ),
+                                    fontWeight =
+                                        FontWeight.Bold
+                                )
+                            }
                         }
+
+                        HorizontalDivider()
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Column {
+                    Spacer(
+                        modifier = Modifier.height(16.dp)
+                    )
 
-                        Text("Contact Information", style = MaterialTheme.typography.headlineSmall)
-                        Spacer(modifier = Modifier.height(8.dp))
+
+                    // TOTAL
+
+                    Row(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        horizontalArrangement =
+                            Arrangement.SpaceBetween
+                    ) {
+
+                        Text(
+                            text = "Total",
+                            style =
+                                MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text =
+                                "Rs %.2f".format(totalPrice),
+
+                            style =
+                                MaterialTheme.typography.titleLarge,
+
+                            color =
+                                colorResource(id = R.color.orange),
+
+                            fontWeight =
+                                FontWeight.Bold
+                        )
+                    }
+
+
+                    Spacer(
+                        modifier = Modifier.height(30.dp)
+                    )
+
+
+                    // CONTACT
+
+                    Text(
+                        text = "Contact Information",
+                        style =
+                            MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+
+                    OutlinedTextField(
+
+                        value = email.value,
+
+                        onValueChange = {
+                            email.value = it
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        label = {
+                            Text("Email")
+                        },
+
+                        keyboardOptions =
+                            KeyboardOptions(
+                                keyboardType =
+                                    KeyboardType.Email
+                            )
+                    )
+
+
+                    Spacer(
+                        modifier = Modifier.height(24.dp)
+                    )
+
+
+                    // ADDRESS
+
+                    Text(
+                        text = "Shipping Address",
+                        style =
+                            MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+
+                    OutlinedTextField(
+
+                        value = country.value,
+
+                        onValueChange = {
+                            country.value = it
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        label = {
+                            Text("Country / Region")
+                        }
+                    )
+
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+
+                    Row(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                    ) {
+
                         OutlinedTextField(
-                            value = email.value,
-                            onValueChange = { email.value = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Email") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Column {
-                        Text("Shipping Address", style = MaterialTheme.typography.headlineSmall)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = country.value,
-                            onValueChange = { email.value = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Country/Region") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                            value = firstname.value,
+
+                            onValueChange = {
+                                firstname.value = it
+                            },
+
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 4.dp),
+
+                            label = {
+                                Text("First Name")
+                            }
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row {
-                            OutlinedTextField(
-                                value = firstname.value,
-                                onValueChange = {firstname.value = it},
-                                modifier = Modifier.weight(1f)
-                                    .padding(end = 8.dp ),
-                                label = {Text("First Name")}
-                            )
-
-                            OutlinedTextField(
-                                value = lastname.value,
-                                onValueChange = {lastname.value = it},
-                                modifier = Modifier.weight(1f),
-                                label = {Text("Last Name")}
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
 
                         OutlinedTextField(
-                            value = address.value,
-                            onValueChange = {address.value = it},
-                            modifier = Modifier.fillMaxWidth(),
-                            label = {Text("Address")}
+
+                            value = lastname.value,
+
+                            onValueChange = {
+                                lastname.value = it
+                            },
+
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 4.dp),
+
+                            label = {
+                                Text("Last Name")
+                            }
+                        )
+                    }
+
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+
+                    OutlinedTextField(
+
+                        value = address.value,
+
+                        onValueChange = {
+                            address.value = it
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        label = {
+                            Text("Address")
+                        }
+                    )
+
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+
+                    Row(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                    ) {
+
+                        OutlinedTextField(
+
+                            value = city.value,
+
+                            onValueChange = {
+                                city.value = it
+                            },
+
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 4.dp),
+
+                            label = {
+                                Text("City")
+                            }
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
 
-                        Row {
-                            OutlinedTextField(
-                                value = city.value,
-                                onValueChange = {city.value = it},
-                                modifier = Modifier.weight(1f)
-                                    .padding(end = 8.dp ),
-                                label = {Text("City")}
+                        OutlinedTextField(
+
+                            value = postalCode.value,
+
+                            onValueChange = {
+                                postalCode.value = it
+                            },
+
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 4.dp),
+
+                            label = {
+                                Text("Postal Code")
+                            },
+
+                            keyboardOptions =
+                                KeyboardOptions(
+                                    keyboardType =
+                                        KeyboardType.Number
+                                )
+                        )
+                    }
+
+
+                    Spacer(
+                        modifier = Modifier.height(24.dp)
+                    )
+
+
+                    // SHIPPING METHOD
+
+                    Text(
+                        text = "Shipping Method",
+                        style =
+                            MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+
+                    Row(
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        RadioButton(
+
+                            selected =
+                                selectedMethod.value ==
+                                        "Standard FREE delivery over Rs. 4500",
+
+                            onClick = {
+
+                                selectedMethod.value =
+                                    "Standard FREE delivery over Rs. 4500"
+                            }
+                        )
+
+                        Text(
+                            "Standard FREE delivery over Rs. 4500"
+                        )
+                    }
+
+
+                    Row(
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        RadioButton(
+
+                            selected =
+                                selectedMethod.value ==
+                                        "Cash on delivery Rs. 50",
+
+                            onClick = {
+
+                                selectedMethod.value =
+                                    "Cash on delivery Rs. 50"
+                            }
+                        )
+
+                        Text(
+                            "Cash on delivery Rs. 50"
+                        )
+                    }
+
+
+                    Spacer(
+                        modifier = Modifier.height(24.dp)
+                    )
+
+
+                    Button(
+
+                        onClick = {
+
+                            if (
+                                email.value.isNotBlank() &&
+                                country.value.isNotBlank() &&
+                                firstname.value.isNotBlank() &&
+                                address.value.isNotBlank() &&
+                                city.value.isNotBlank() &&
+                                postalCode.value.isNotBlank()
+                            ) {
+
+                                pay()
+                            }
+                        },
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(55.dp),
+
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor =
+                                    colorResource(
+                                        id = R.color.orange
+                                    )
                             )
+                    ) {
 
-                            OutlinedTextField(
-                                value = postalCode.value,
-                                onValueChange = {postalCode.value = it},
-                                modifier = Modifier.weight(1f),
-                                label = {Text("Postal Code")}
-                            )
-                        }
-
+                        Text(
+                            text = "Proceed to Payment",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Column {
-                        Text( " Shipping Method" ,
-                            style =  MaterialTheme.typography.headlineSmall,)
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(verticalAlignment = Alignment.CenterVertically){
-
-                            RadioButton(selected = selectedMethod.value == "Standard FREE delivery over Rs. 4500",
-                                onClick = {
-                                    selectedMethod.value = "Standard FREE delivery over Rs. 4500"
-                                })
-
-                            Spacer(modifier = Modifier.padding(8.dp))
-                            Text("Standard Free delivery over Rs. 4500")
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically){
-
-                            RadioButton(selected = selectedMethod.value == "Cash on delivery Rs. 50",
-                                onClick = {
-                                    selectedMethod.value = " Cash on delivery Rs. 50"
-                                })
-
-                            Spacer(modifier = Modifier.padding(8.dp))
-                            Text("Cash on delivery Rs. 50")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(onClick = {
-                        pay.invoke()
-                    },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            colorResource(id = R.color.orange)
-                        ))
-                    {
-
-                        Text("Continue to Shipping")
-
-                    }
+                    Spacer(
+                        modifier = Modifier.height(30.dp)
+                    )
                 }
             }
         }

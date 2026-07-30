@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,6 +16,13 @@ android {
     namespace = "com.example.myapplication"
     compileSdk = 36
 
+    // Load the local.properties file
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(FileInputStream(localPropertiesFile))
+    }
+
     defaultConfig {
         applicationId = "com.example.myapplication"
         minSdk = 26
@@ -21,6 +31,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Read the key and create a BuildConfig field
+        val razorpayKey: String = localProperties.getProperty("RAZORPAY_KEY_ID") ?: "\"\""
+        buildConfigField("String", "RAZORPAY_KEY_ID", razorpayKey)
+
+        // Optional: If you need it in your Manifest
+        manifestPlaceholders["RAZORPAY_KEY_ID"] = razorpayKey.replace("\"", "")
     }
 
     buildTypes {
@@ -46,6 +62,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

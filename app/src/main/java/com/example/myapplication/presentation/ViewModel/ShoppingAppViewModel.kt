@@ -20,6 +20,7 @@ import com.example.myapplication.domain.di.UseCase.GetProductById
 import com.example.myapplication.domain.di.UseCase.GetSpecificCategoryUSeCase
 import com.example.myapplication.domain.di.UseCase.GetUserUSeCase
 import com.example.myapplication.domain.di.UseCase.LoginUserUseCase
+import com.example.myapplication.domain.di.UseCase.RemoveFromCartUseCase
 import com.example.myapplication.domain.di.UseCase.UpdateUserDataUseCase
 import com.example.myapplication.domain.di.UseCase.UserProfileImageUseCase
 import com.example.myapplication.domain.di.UseCase.getCategoryInLimitUseCase
@@ -55,6 +56,7 @@ class ShoppingAppViewModel @Inject constructor(
     private val getAllSuggestedProductUseCase: GetAllSuggestedProductUseCase,
     private val getAllProductUseCase: GetAllProductUseCase,
     private val getCartUSeCase : GetCartUSeCase,
+    private val removeFromCartUseCase: RemoveFromCartUseCase
     ): ViewModel()
 {
 
@@ -66,6 +68,8 @@ class ShoppingAppViewModel @Inject constructor(
 
         private val _prodfileState = MutableStateFlow(ProdfileScreenState())
         val prodfileScreenState = _prodfileState.asStateFlow()
+
+        private val _removeFromCartState = MutableStateFlow(removeFromCartState())
 
         private val _upDateState = MutableStateFlow(UpDateScreenState())
         val upDateScreenState = _upDateState.asStateFlow()
@@ -141,38 +145,49 @@ class ShoppingAppViewModel @Inject constructor(
         }
 
 
-        fun getCheckOut(productId: String) {
 
+
+    fun getCheckOut(productId: String) {
+        // 1. Check if the string is actually a number (Total Price from Cart)
+        val isPrice = productId.toDoubleOrNull() != null || productId.contains(".")
+
+        if (isPrice) {
+            // If it's a price, update state manually without calling Firestore
+            _getCheckoutState.value = _getCheckoutState.value.copy(
+                isLoading = false,
+                errorMessage = null,
+                UserData = ProductDataModel(
+                    productId = "CART_CHECKOUT",
+                    name = "Cart Items Total",
+                    price = productId, // This is the total price passed from Cart
+                    image = "" // You can put a placeholder cart icon URL here
+                )
+            )
+        } else {
+            // 2. Normal logic: Fetch single product details by ID
             viewModelScope.launch {
-                getCheckOutUSeCase.getCheckOut(productId).collect {
-
-                    when (it) {
-
+                getCheckOutUSeCase.getCheckOut(productId).collect { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _getCheckoutState.value = _getCheckoutState.value.copy(isLoading = true)
+                        }
                         is ResultState.Error -> {
                             _getCheckoutState.value = _getCheckoutState.value.copy(
                                 isLoading = false,
-                                errorMessage = it.message
+                                errorMessage = result.message
                             )
                         }
-
-                        is ResultState.Loading -> {
-                            _getCheckoutState.value = _getCheckoutState.value.copy(
-                                isLoading = true
-                            )
-                        }
-
                         is ResultState.Success -> {
                             _getCheckoutState.value = _getCheckoutState.value.copy(
                                 isLoading = false,
-                                UserData = it.data
+                                UserData = result.data
                             )
                         }
-
                     }
                 }
             }
+        }
     }
-
 
     fun getAllCategories(){
 
@@ -235,6 +250,50 @@ class ShoppingAppViewModel @Inject constructor(
         }
     }
 
+
+    fun removeFromCart(cartId: String) {
+
+        viewModelScope.launch {
+
+            removeFromCartUseCase
+                .removeFromCart(cartId)
+                .collect { result ->
+
+                    when (result) {
+
+                        is ResultState.Loading -> {
+
+                            _removeFromCartState.value =
+                                _removeFromCartState.value.copy(
+                                    isLoading = true,
+                                    errorMessage = null
+                                )
+                        }
+
+                        is ResultState.Error -> {
+
+                            _removeFromCartState.value =
+                                _removeFromCartState.value.copy(
+                                    isLoading = false,
+                                    errorMessage = result.message
+                                )
+                        }
+
+                        is ResultState.Success -> {
+
+                            _removeFromCartState.value =
+                                _removeFromCartState.value.copy(
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+
+                            // No getCart() needed.
+                            // SnapshotListener automatically updates cart.
+                        }
+                    }
+                }
+        }
+    }
 
     fun getAllProducts(){
         viewModelScope.launch {
@@ -740,4 +799,10 @@ data class GetAllSuggestedProductsState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val UserData : List<ProductDataModel>? = emptyList()
+)
+
+data class removeFromCartState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val UserData : List<CartDataModel>? = emptyList()
 )

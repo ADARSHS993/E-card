@@ -1,6 +1,7 @@
 package com.example.myapplication.presentation.Screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,123 +35,244 @@ import com.example.myapplication.presentation.ViewModel.ShoppingAppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CartScreen(navController: NavController, viewModel: ShoppingAppViewModel = hiltViewModel() , product : ProductDataModel) {
+fun CartScreen(
+    navController: NavController,
+    viewModel: ShoppingAppViewModel = hiltViewModel(),
+) {
 
     val cartState = viewModel.getCartState.collectAsStateWithLifecycle()
     val cartItems = cartState.value.UserData ?: emptyList()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
-    // Calculate Total Price
+    val scrollBehavior =
+        TopAppBarDefaults.enterAlwaysScrollBehavior(
+            rememberTopAppBarState()
+        )
+
     val totalPrice = remember(cartItems) {
-        cartItems.sumOf { (it.price.toDoubleOrNull() ?: 0.0) * it.quantity }
+
+        cartItems.sumOf { item ->
+
+            val price = item.price
+                .replace(Regex("[^0-9.]"), "")
+                .toDoubleOrNull()
+                ?: 0.0
+
+            price * item.quantity
+        }
     }
 
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         viewModel.getCart()
     }
 
     Scaffold(
+
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+            .nestedScroll(
+                scrollBehavior.nestedScrollConnection
+            ),
+
         topBar = {
+
             TopAppBar(
                 title = {
                     Text(
-                        "My Cart",
-                        style = MaterialTheme.typography.titleLarge,
+                        text = "My Cart",
                         fontWeight = FontWeight.Bold
                     )
                 },
+
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 },
+
                 scrollBehavior = scrollBehavior
             )
         },
+
         bottomBar = {
-            // Checkout Section
+
             if (cartItems.isNotEmpty()) {
+
                 Surface(
                     tonalElevation = 8.dp,
                     shadowElevation = 8.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
+
                     Column(
                         modifier = Modifier
                             .padding(20.dp)
                             .navigationBarsPadding()
                     ) {
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween
                         ) {
-                            Text("Total:", style = MaterialTheme.typography.titleMedium)
+
                             Text(
-                                "Rs $totalPrice",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = colorResource(id = R.color.orange),
+                                text = "Total:",
+                                style =
+                                    MaterialTheme.typography.titleMedium
+                            )
+
+                            Text(
+                                text = "Rs %.2f".format(totalPrice),
+                                style =
+                                    MaterialTheme.typography.titleLarge,
+                                color =
+                                    colorResource(id = R.color.orange),
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Spacer(
+                            modifier = Modifier.height(16.dp)
+                        )
+
                         Button(
-                            onClick = { navController.navigate(Routes.CheckoutScreen(product.productId))},
+
+                            onClick = {
+
+                                navController.navigate(
+                                    Routes.CheckoutScreen(
+                                        totalPrice.toString()
+                                    )
+                                )
+                            },
+
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorResource(id = R.color.orange)
-                            )
+
+                            shape =
+                                RoundedCornerShape(12.dp),
+
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor =
+                                        colorResource(
+                                            id = R.color.orange
+                                        )
+                                )
                         ) {
-                            Text("Check Out", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+                            Text(
+                                text = "Check Out",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
             }
         }
+
     ) { innerPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+
             when {
-                cartState.value.isLoading -> {
+
+                cartState.value.isLoading &&
+                        cartItems.isEmpty() -> {
+
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = colorResource(id = R.color.orange)
+                        modifier =
+                            Modifier.align(Alignment.Center),
+                        color =
+                            colorResource(id = R.color.orange)
                     )
                 }
+
                 cartState.value.errorMessage != null -> {
+
                     Text(
-                        "Error: ${cartState.value.errorMessage}",
-                        modifier = Modifier.align(Alignment.Center),
+                        text =
+                            "Error: ${cartState.value.errorMessage}",
+                        modifier =
+                            Modifier.align(Alignment.Center),
                         color = Color.Red
                     )
                 }
+
                 cartItems.isEmpty() -> {
+
                     Column(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        verticalArrangement =
+                            Arrangement.Center,
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
                     ) {
-                        Text("Your cart is empty", style = MaterialTheme.typography.bodyLarge)
+
+                        Text(
+                            text = "Your cart is empty",
+                            style =
+                                MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
+
                 else -> {
+
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding =
+                            PaddingValues(16.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(12.dp)
                     ) {
-                        items(cartItems) { item ->
+
+                        items(
+                            items = cartItems,
+
+                            // Firestore document ID
+                            key = { item ->
+                                item.cartId
+                            }
+
+                        ) { item ->
+
                             CartItemCard(
+
                                 item = item,
-                                onDelete = { /* viewModel.removeFromCart(item.id) */ }
+
+                                onDelete = {
+
+                                    // IMPORTANT
+                                    viewModel.removeFromCart(
+                                        item.cartId
+                                    )
+                                },
+
+                                onClick = {
+
+                                    navController.navigate(
+                                        Routes
+                                            .EachProductDetailsScreen(
+                                                item.productId
+                                            )
+                                    )
+                                }
                             )
                         }
                     }
@@ -161,9 +283,12 @@ fun CartScreen(navController: NavController, viewModel: ShoppingAppViewModel = h
 }
 
 @Composable
-fun CartItemCard(item: CartDataModel, onDelete: () -> Unit) {
+fun CartItemCard(item: CartDataModel, onDelete: () -> Unit, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            // FIXED: Added the clickable modifier so clicking the card actually works
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -174,7 +299,8 @@ fun CartItemCard(item: CartDataModel, onDelete: () -> Unit) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product Image
+            // ... AsyncImage and Details Column (Keep your existing code here) ...
+
             AsyncImage(
                 model = item.image,
                 contentDescription = item.name,
@@ -211,12 +337,10 @@ fun CartItemCard(item: CartDataModel, onDelete: () -> Unit) {
                 )
             }
 
+
             // Quantity and Delete Column
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = onDelete) {
+            Column(horizontalAlignment = Alignment.End) {
+                IconButton(onClick = { onDelete() }) { // Ensure onDelete is called
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Remove",
