@@ -13,6 +13,7 @@ import com.example.myapplication.domain.di.model.CategoryDataModel
 import com.example.myapplication.domain.di.model.ProductDataModel
 import com.example.myapplication.domain.di.model.USerDataParent
 import com.example.myapplication.domain.di.model.UserData
+import com.example.myapplication.domain.di.model.OrderDataModel
 import com.example.myapplication.domain.di.repo.Repo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -514,6 +515,69 @@ class RepoImpl @Inject constructor(
             }
 
         awaitClose { }
+    }
+
+    override fun placeOrder(order: OrderDataModel): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val docRef = firebaseFirestore.collection("orders").document()
+        order.orderId = docRef.id
+        docRef.set(order)
+            .addOnSuccessListener {
+                val userId = firebaseAuth.currentUser?.uid ?: ""
+                if (userId.isNotEmpty()) {
+                    firebaseFirestore.collection(ADDTOCARD).document(userId)
+                        .collection("User_Card").get()
+                        .addOnSuccessListener { snapshot ->
+                            val batch = firebaseFirestore.batch()
+                            for (doc in snapshot.documents) {
+                                batch.delete(doc.reference)
+                            }
+                            batch.commit().addOnCompleteListener {
+                                trySend(ResultState.Success(order.orderId))
+                                close()
+                            }
+                        }
+                        .addOnFailureListener {
+                            trySend(ResultState.Success(order.orderId))
+                            close()
+                        }
+                } else {
+                    trySend(ResultState.Success(order.orderId))
+                    close()
+                }
+            }
+            .addOnFailureListener {
+                trySend(ResultState.Error(it.message ?: "Failed to place order"))
+                close()
+            }
+        awaitClose { }
+    }
+
+    override fun getMyOrders(): Flow<ResultState<List<OrderDataModel>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val userId = firebaseAuth.currentUser?.uid
+        if (userId == null) {
+            trySend(ResultState.Error("User not logged in"))
+            close()
+            return@callbackFlow
+        }
+        
+        val listener = firebaseFirestore.collection("orders")
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(ResultState.Error(error.message ?: "Failed to load orders"))
+                    return@addSnapshotListener
+                }
+                
+                if (snapshot != null) {
+                    val orders = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(OrderDataModel::class.java)
+                    }.sortedByDescending { it.date }
+                    trySend(ResultState.Success(orders))
+                }
+            }
+        awaitClose { listener.remove() }
     }
 }
 

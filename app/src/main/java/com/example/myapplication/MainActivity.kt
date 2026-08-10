@@ -69,20 +69,43 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     @Composable
     fun mainScreen(firebaseAuth: FirebaseAuth, onPayTest: () -> Unit){
 
-        val showSplash = remember {
-            mutableStateOf(true)
-        }
+        val showSplash = remember { mutableStateOf(true) }
+        val startDestination = remember { mutableStateOf<Any?>(null) }
 
         LaunchedEffect(key1 = Unit){
+            val currentUser = firebaseAuth.currentUser
+            if (currentUser == null) {
+                startDestination.value = com.example.myapplication.presentation.Navigation.SubNavigation.LoginSignUpScreen
+            } else {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("admins")
+                    .document(currentUser.uid)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        if (doc.exists() && doc.getString("role") == "admin") {
+                            startDestination.value = com.example.myapplication.presentation.Navigation.Routes.AdminDashboardScreen
+                        } else {
+                            startDestination.value = com.example.myapplication.presentation.Navigation.SubNavigation.MainHomeScreen
+                        }
+                    }
+                    .addOnFailureListener {
+                        startDestination.value = com.example.myapplication.presentation.Navigation.SubNavigation.MainHomeScreen
+                    }
+            }
+
             android.os.Handler(Looper.getMainLooper()).postDelayed({
                 showSplash.value = false
             }, 3000)
         }
 
-        if(showSplash.value){
+        if(showSplash.value || startDestination.value == null){
             SplashScreen()
         }else{
-            App(firebaseAuth, { payTest() })
+            App(
+                firebasAuth = firebaseAuth,
+                payTest = onPayTest,
+                startDestination = startDestination.value!!
+            )
         }
     }
 

@@ -238,6 +238,24 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavHostController,
                         }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Admin Login Link
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Are you an Admin? Login here",
+                        color = Color.Cyan.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        modifier = Modifier.clickable {
+                            navController.navigate(Routes.AdminLoginScreen)
+                        }
+                    )
+                }
             }
         }
     }

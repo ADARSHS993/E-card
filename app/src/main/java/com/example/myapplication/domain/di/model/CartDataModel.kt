@@ -1,5 +1,8 @@
 package com.example.myapplication.domain.di.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class CartDataModel(
 
     var productId: String = "",
@@ -12,3 +15,4 @@ data class CartDataModel(
     var description: String = "",
     var category: String = "",
 )
+

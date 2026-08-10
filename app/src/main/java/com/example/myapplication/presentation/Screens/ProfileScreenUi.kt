@@ -281,15 +281,64 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.size(16.dp))
 
+                // Admin Dashboard button (visible only to admin users)
+                val isAdmin = remember { mutableStateOf(false) }
+                LaunchedEffect(key1 = firebaseAuth.currentUser?.uid) {
+                    val uid = firebaseAuth.currentUser?.uid
+                    if (uid != null) {
+                        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("admins")
+                            .document(uid)
+                            .get()
+                            .addOnSuccessListener { doc ->
+                                if (doc.exists() && doc.getString("role") == "admin") {
+                                    isAdmin.value = true
+                                }
+                            }
+                    }
+                }
+
+                if (isAdmin.value) {
+                    OutlinedButton(
+                        onClick = {
+                            navController.navigate(com.example.myapplication.presentation.Navigation.Routes.AdminDashboardScreen)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            Color(0xFF2C3E50)
+                        )
+                    ) {
+                        Text("Admin Dashboard", color = Color.White)
+                    }
+
+                    Spacer(modifier = Modifier.size(16.dp))
+                }
+
                 OutlinedButton(
-                    onClick = { showDialog.value = true },
+                    onClick = {
+                        navController.navigate(com.example.myapplication.presentation.Navigation.Routes.MyOrdersScreen)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
                         colorResource(id = R.color.orange)
                     )
                 ) {
-                    Text("Log Out")
+                    Text("My Orders", color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.size(16.dp))
+
+                OutlinedButton(
+                    onClick = { showDialog.value = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color.Gray
+                    )
+                ) {
+                    Text("Log Out", color = Color.White)
                 }
 
                 if (showDialog.value) {

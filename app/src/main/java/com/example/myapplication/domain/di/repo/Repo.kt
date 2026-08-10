@@ -31,4 +31,7 @@ interface Repo {
     fun getAllSuggestedProducts() : Flow<ResultState<List<ProductDataModel>>>
 
     fun removeFromCart(cartId : String) : Flow<ResultState<String>>
+    
+    fun placeOrder(order: com.example.myapplication.domain.di.model.OrderDataModel): Flow<ResultState<String>>
+    fun getMyOrders(): Flow<ResultState<List<com.example.myapplication.domain.di.model.OrderDataModel>>>
 }

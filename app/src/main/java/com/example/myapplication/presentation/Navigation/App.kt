@@ -29,8 +29,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.colorResource
+import androidx.compose.material.CircularProgressIndicator
+import com.example.myapplication.R
 
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -62,7 +66,8 @@ data class BottomNavigationItem(
 @Composable
 fun App(
     firebasAuth: FirebaseAuth,
-    payTest:()-> Unit
+    payTest: () -> Unit,
+    startDestination: Any
 ) {
     val navController = rememberNavController()// The NavController is the "GPS" that moves you between rooms.
 
@@ -78,7 +83,14 @@ fun App(
         shouldShowBottomBar.value = when (currentDestination) {
 
             Routes.LoginScreen::class.qualifiedName,
-            Routes.SignUpScreen::class.qualifiedName
+            Routes.SignUpScreen::class.qualifiedName,
+            Routes.AdminLoginScreen::class.qualifiedName,
+            Routes.AdminDashboardScreen::class.qualifiedName,
+            Routes.AdminCategoriesScreen::class.qualifiedName,
+            Routes.AdminProductsScreen::class.qualifiedName,
+            Routes.AdminOrdersScreen::class.qualifiedName,
+            Routes.AdminUsersScreen::class.qualifiedName,
+            Routes.MyOrdersScreen::class.qualifiedName
                 -> false
 
             else -> true
@@ -106,16 +118,12 @@ fun App(
         )
     )
 
-    var starScreen = if (firebasAuth.currentUser != null) {
-        SubNavigation.MainHomeScreen
-    } else {
-        SubNavigation.LoginSignUpScreen
-    }
+    val starScreen = startDestination
 
     Scaffold(
-        bottomBar = {
+            bottomBar = {
 
-            if (shouldShowBottomBar.value) {
+                if (shouldShowBottomBar.value) {
 
                 Surface(
                     modifier = Modifier
@@ -247,6 +255,35 @@ fun App(
                         productId = product.ProductId,
                         pay = payTest
                     )
+                }
+
+                composable<Routes.MyOrdersScreen> {
+                    com.example.myapplication.presentation.Screens.MyOrdersScreenUi(navController = navController)
+                }
+
+                // Admin Screens
+                composable<Routes.AdminLoginScreen> {
+                    com.example.myapplication.presentation.Screens.admin.AdminLoginScreen(navController = navController)
+                }
+
+                composable<Routes.AdminDashboardScreen> {
+                    com.example.myapplication.presentation.Screens.admin.AdminDashboardScreen(navController = navController)
+                }
+
+                composable<Routes.AdminCategoriesScreen> {
+                    com.example.myapplication.presentation.Screens.admin.AdminCategoriesScreen(navController = navController)
+                }
+
+                composable<Routes.AdminProductsScreen> {
+                    com.example.myapplication.presentation.Screens.admin.AdminProductsScreen(navController = navController)
+                }
+
+                composable<Routes.AdminOrdersScreen> {
+                    com.example.myapplication.presentation.Screens.admin.AdminOrdersScreen(navController = navController)
+                }
+
+                composable<Routes.AdminUsersScreen> {
+                    com.example.myapplication.presentation.Screens.admin.AdminUsersScreen(navController = navController)
                 }
             }
         }

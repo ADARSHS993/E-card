@@ -22,6 +22,12 @@ abstract class DataModule {
         repoImpl: RepoImpl
     ): Repo
 
+    @Binds
+    @Singleton
+    abstract fun bindAdminRepo(
+        adminRepoImpl: com.example.myapplication.data.di.repo.AdminRepositoryImpl
+    ): com.example.myapplication.domain.di.repo.AdminRepository
+
     // 2. These remain as Provides because they come from an external library (Firebase)
     companion object {
         @Singleton

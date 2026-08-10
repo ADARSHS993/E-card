@@ -31,13 +31,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import com.example.myapplication.R
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.AlertDialog
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,11 +62,14 @@ fun CheckOutScreen(
     pay: () -> Unit,
 ) {
 
+    val context = LocalContext.current
     val cartState =
         viewModel.getCartState.collectAsStateWithLifecycle()
 
     val cartItems =
         cartState.value.UserData ?: emptyList()
+
+    val placeOrderState by viewModel.placeOrderState.collectAsStateWithLifecycle()
 
     val email = remember { mutableStateOf("") }
     val country = remember { mutableStateOf("") }
@@ -571,42 +578,63 @@ fun CheckOutScreen(
                     )
 
 
-                    Button(
-
-                        onClick = {
-
-                            if (
-                                email.value.isNotBlank() &&
-                                country.value.isNotBlank() &&
-                                firstname.value.isNotBlank() &&
-                                address.value.isNotBlank() &&
-                                city.value.isNotBlank() &&
-                                postalCode.value.isNotBlank()
-                            ) {
-
-                                pay()
-                            }
-                        },
-
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(55.dp),
-
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor =
-                                    colorResource(
-                                        id = R.color.orange
+                    if (placeOrderState.isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = colorResource(id = R.color.orange))
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                if (
+                                    email.value.isNotBlank() &&
+                                    country.value.isNotBlank() &&
+                                    firstname.value.isNotBlank() &&
+                                    address.value.isNotBlank() &&
+                                    city.value.isNotBlank() &&
+                                    postalCode.value.isNotBlank()
+                                ) {
+                                    val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                                    val order = com.example.myapplication.domain.di.model.OrderDataModel(
+                                        userId = currentUserId,
+                                        email = email.value,
+                                        firstName = firstname.value,
+                                        lastName = lastname.value,
+                                        address = address.value,
+                                        city = city.value,
+                                        postalCode = postalCode.value,
+                                        country = country.value,
+                                        selectedDeliveryMethod = selectedMethod.value,
+                                        items = cartItems,
+                                        totalAmount = totalPrice,
+                                        date = System.currentTimeMillis(),
+                                        paymentStatus = if (selectedMethod.value.contains("Cash")) "COD" else "Pending",
+                                        orderStatus = "Pending"
                                     )
+                                    viewModel.placeOrder(order) {
+                                        // Toast or handling is done via state dialog below
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(55.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(id = R.color.orange)
                             )
-                    ) {
-
-                        Text(
-                            text = "Proceed to Payment",
-                            fontWeight = FontWeight.Bold
-                        )
+                        ) {
+                            Text(
+                                text = if (selectedMethod.value.contains("Cash")) "Place Order (COD)" else "Place Order & Pay",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-
 
                     Spacer(
                         modifier = Modifier.height(30.dp)
@@ -614,5 +642,30 @@ fun CheckOutScreen(
                 }
             }
         }
+    }
+
+    if (placeOrderState.orderId != null) {
+        AlertDialog(
+            onDismissRequest = {
+                viewModel.clearPlaceOrderState()
+                navController.navigate(com.example.myapplication.presentation.Navigation.SubNavigation.MainHomeScreen) {
+                    popUpTo(com.example.myapplication.presentation.Navigation.Routes.HomeScreen::class.qualifiedName!!) { inclusive = false }
+                }
+            },
+            title = { Text("Order Placed!") },
+            text = { Text("Your order was placed successfully.\nOrder ID: ${placeOrderState.orderId}") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearPlaceOrderState()
+                        navController.navigate(com.example.myapplication.presentation.Navigation.SubNavigation.MainHomeScreen) {
+                            popUpTo(com.example.myapplication.presentation.Navigation.Routes.HomeScreen::class.qualifiedName!!) { inclusive = false }
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }

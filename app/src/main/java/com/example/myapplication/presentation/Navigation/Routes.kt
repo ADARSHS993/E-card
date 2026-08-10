@@ -48,4 +48,25 @@ sealed class Routes{
 
     @Serializable
     data class EachCategoryItemsScreen(val categoryname : String)
+
+    @Serializable
+    object AdminLoginScreen
+
+    @Serializable
+    object AdminDashboardScreen
+
+    @Serializable
+    object AdminCategoriesScreen
+
+    @Serializable
+    object AdminProductsScreen
+
+    @Serializable
+    object AdminOrdersScreen
+
+    @Serializable
+    object AdminUsersScreen
+
+    @Serializable
+    object MyOrdersScreen
 }

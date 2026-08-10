@@ -29,6 +29,7 @@ import com.example.myapplication.domain.di.model.CategoryDataModel
 import com.example.myapplication.domain.di.model.ProductDataModel
 import com.example.myapplication.domain.di.model.USerDataParent
 import com.example.myapplication.domain.di.model.UserData
+import com.example.myapplication.domain.di.model.OrderDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +57,8 @@ class ShoppingAppViewModel @Inject constructor(
     private val getAllSuggestedProductUseCase: GetAllSuggestedProductUseCase,
     private val getAllProductUseCase: GetAllProductUseCase,
     private val getCartUSeCase : GetCartUSeCase,
-    private val removeFromCartUseCase: RemoveFromCartUseCase
+    private val removeFromCartUseCase: RemoveFromCartUseCase,
+    private val repo: com.example.myapplication.domain.di.repo.Repo
     ): ViewModel()
 {
 
@@ -106,6 +108,12 @@ class ShoppingAppViewModel @Inject constructor(
 
         private val _getAllSuggestedProductsState = MutableStateFlow(GetAllSuggestedProductsState())
         val getAllSuggestedProductsState = _getAllSuggestedProductsState.asStateFlow()
+
+        private val _placeOrderState = MutableStateFlow(PlaceOrderState())
+        val placeOrderState = _placeOrderState.asStateFlow()
+
+        private val _getMyOrdersState = MutableStateFlow(GetMyOrdersState())
+        val getMyOrdersState = _getMyOrdersState.asStateFlow()
 
         private val homeScreenState = MutableStateFlow(HomeScreenState())
         val homeState = homeScreenState.asStateFlow()
@@ -704,7 +712,46 @@ class ShoppingAppViewModel @Inject constructor(
         }
     }
 
+    fun placeOrder(order: OrderDataModel, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            repo.placeOrder(order).collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _placeOrderState.value = PlaceOrderState(isLoading = true)
+                    }
+                    is ResultState.Error -> {
+                        _placeOrderState.value = PlaceOrderState(isLoading = false, errorMessage = it.message)
+                    }
+                    is ResultState.Success -> {
+                        _placeOrderState.value = PlaceOrderState(isLoading = false, orderId = it.data)
+                        onSuccess()
+                    }
+                }
+            }
+        }
+    }
 
+    fun getMyOrders() {
+        viewModelScope.launch {
+            repo.getMyOrders().collect {
+                when (it) {
+                    is ResultState.Loading -> {
+                        _getMyOrdersState.value = GetMyOrdersState(isLoading = true)
+                    }
+                    is ResultState.Error -> {
+                        _getMyOrdersState.value = GetMyOrdersState(isLoading = false, errorMessage = it.message)
+                    }
+                    is ResultState.Success -> {
+                        _getMyOrdersState.value = GetMyOrdersState(isLoading = false, orders = it.data)
+                    }
+                }
+            }
+        }
+    }
+
+    fun clearPlaceOrderState() {
+        _placeOrderState.value = PlaceOrderState()
+    }
 }
 
 
@@ -805,4 +852,16 @@ data class removeFromCartState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val UserData : List<CartDataModel>? = emptyList()
+)
+
+data class PlaceOrderState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val orderId: String? = null
+)
+
+data class GetMyOrdersState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val orders: List<OrderDataModel> = emptyList()
 )
